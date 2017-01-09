@@ -2,32 +2,42 @@
 
 set -x
 
-# rename files in case date format uses spaces
-INDIR=$@
-find "${INDIR}" -depth 1 -name "*.*" -exec sh -c 'mv "$1" "$(echo "$1" | sed s/\ /_/g)"' _ {} \;
+INDIR=$1
 
-# run through possible extensions,
-# 'jpg' must be first !!!
-for e in jpg JPG jpeg JPEG ; do
-    # run through filelist
-    echo $e "  ==================="
+# loop through possible extensions,
+for ext in jpg jpeg ; do
+    echo ======================
+    echo Process all $ext files
+    echo ======================
 
-    for file in $( ls ${INDIR}/*.$e ); do
+    # loop through files
+    # use a loop that properly handles filepaths containing spaces
+    find "${INDIR}" -depth 1 -type f -iname "*.${ext}" -print0 | while read -d $'\0' file
+    do
         echo renaming $file
-        exiflist -o l -f date-taken $file
-        # get the date and time from exif 
-        dateTaken="$(exiflist -o l -f date-taken $file)"
+
+        # in case of spaces escape them
+        FILE=$(printf %q "$file")
+
+        # exiflist cannot handle this properly, thus indirect through eval
+        cmd=$(echo exiflist -o l -f date-taken $FILE)
+        eval $cmd
+
+        # get the date and time from exif
+        dateTaken="$(eval $cmd)"
         # split at first SPACE --> thus removing the time
         dateTaken=(${dateTaken// / })
         # replace forbidden characters
         dateTaken="$(echo $(echo "$dateTaken" | sed s/:/_/g | sed s/\ /_/ | sed s/\[.]/_/g | sed s/-/_/g ))"
-        if [ ! -d "$INDIR/$dateTaken" ]; then
-            mkdir $INDIR/$dateTaken
-        fi
-        fileName="$(basename $file)"
-        mv $file $INDIR/$dateTaken/$fileName
+
+        # move in place
+        mkdir -p "${INDIR}"/$dateTaken
+        fileName="$(basename "$file")"
+        mv "$file" "${INDIR}/$dateTaken/$fileName"
+
         # set date properties of file to dateTaken
-        exiffile -t $INDIR/$dateTaken/$fileName
+        exiffile -t "${INDIR}/$dateTaken/$fileName"
+
     done
 done
 
