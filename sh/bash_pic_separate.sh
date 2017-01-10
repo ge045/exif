@@ -23,8 +23,13 @@ for ext in jpg jpeg ; do
         cmd=$(echo exiflist -o l -f date-taken $FILE)
         eval $cmd
 
-        # get the date and time from exif
+        # get the date and time from exif; omit in case no date was returned
         dateTaken="$(eval $cmd)"
+        if [[ -z ${dateTaken// } ]]
+        then
+            echo No EXIF entry for file $file
+            continue
+        fi
         # split at first SPACE --> thus removing the time
         dateTaken=(${dateTaken// / })
         # replace forbidden characters
