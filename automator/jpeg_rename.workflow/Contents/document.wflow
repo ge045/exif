@@ -62,7 +62,7 @@
 					<string>source ~/.bash_profile
 for f in "$@"
 do
-	bash_pic_rename.sh "$f"
+	rename.sh "$f"
 done</string>
 					<key>CheckedForUserDefaultShell</key>
 					<true/>
