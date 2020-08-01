@@ -1,11 +1,8 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]
-  then
-    INDIR=.
-else
-    INDIR=$1
-fi
+function do_separate(){
+
+INDIR=$1
 
 echo "Searching directory $INDIR"
 set -x
@@ -57,4 +54,19 @@ for ext in jpg jpeg ; do
 
     done
 done
+
+}
+
+
+if [ $# -eq 0 ]
+then
+    __INDIR=.
+    do_separate ${__INDIR}
+else
+    for __INDIR in "$@"
+    do
+        do_separate "$__INDIR"
+    done
+fi
+
 
